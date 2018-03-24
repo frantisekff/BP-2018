@@ -22,16 +22,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-//import com.example.frantisekff.appqr_string.camera.CameraSource;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
+import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -111,15 +112,12 @@ public class ScanBarcodeActivity extends Activity {
             this.finish();
         }
         //CameraSource.Builder:  Builder for configuring and creating an associated camera source.
-        /*
         cameraSource = new CameraSource.Builder(this, barcode)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedFps(30)
                 .setAutoFocusEnabled(true)
                 .setRequestedPreviewSize(width, height)
                 .build();
-        */
-
 
 
 
@@ -128,11 +126,7 @@ public class ScanBarcodeActivity extends Activity {
             @Override
             public void onClick(View view) {
                 if (hasCameraFlash) {
-                    try {
                         flashOnButton();
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
                 } else {
                     Toast.makeText(ScanBarcodeActivity.this, "No flash available on your device",
                             Toast.LENGTH_SHORT).show();
@@ -196,7 +190,7 @@ public class ScanBarcodeActivity extends Activity {
 
                         @Override
                         public void run() {
-                       
+
                             //zapnutie scrollovania
                             textResult.setMovementMethod(new ScrollingMovementMethod());
 
@@ -320,12 +314,8 @@ public class ScanBarcodeActivity extends Activity {
 
     }
 
-    private void flashOnButton() throws CameraAccessException {
-        CameraManager camManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        String cameraId = camManager.getCameraIdList()[0]; // Usually front camera is at 0 position.
-        camManager.setTorchMode(cameraId, true);
-
-        /*camera=getCamera(cameraSource);
+    private void flashOnButton() {
+        camera=getCamera(cameraSource);
         if (camera != null) {
             try {
                 Camera.Parameters param = camera.getParameters();
@@ -345,7 +335,7 @@ public class ScanBarcodeActivity extends Activity {
                 e.printStackTrace();
             }
 
-        }*/
+        }
     }
     private static Camera getCamera(@NonNull CameraSource cameraSource) {
         Field[] declaredFields = CameraSource.class.getDeclaredFields();
