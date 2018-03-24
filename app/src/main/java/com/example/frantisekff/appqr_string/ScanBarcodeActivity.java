@@ -219,7 +219,7 @@ public class ScanBarcodeActivity extends Activity {
 
 
                             textResult.setText(inputFromCode);
-                            cameraSource.release();
+                            //cameraSource.release();
 
 
                             // Toast.makeText(getApplicationContext(), inputFromCode , Toast.LENGTH_LONG).show();
