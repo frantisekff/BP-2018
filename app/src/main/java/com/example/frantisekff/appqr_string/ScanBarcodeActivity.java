@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -22,6 +23,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.vision.CameraSource;
@@ -51,8 +57,10 @@ public class ScanBarcodeActivity extends Activity {
     SurfaceHolder holder;
     TextView textResult;
     Button torch;
-
-
+    RequestQueue requestQueue;
+    static final String REQ_TAG = "VACTIVITY";
+    String inputFromCode;
+    Map<String, Object>  get_content;
 
     private Camera camera = null;
     boolean flashmode=false;
@@ -65,14 +73,31 @@ public class ScanBarcodeActivity extends Activity {
         setContentView(R.layout.activity_scan_barcode);
 
 
+        requestQueue = RequestQueueSingleton.getInstance(this.getApplicationContext())
+                .getRequestQueue();
+
+        Button mIdButtonHome = (Button)findViewById(R.id.post);
+
+        mIdButtonHome.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                try {
+                    getJsonResponsePost(v);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Intent browserIntent = new Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("http://gymplusak.6f.sk/bakalarka/inputs.html"));
+                startActivity(browserIntent);
+            }
+        });
+
 
         Button resetBtn= (Button) findViewById(R.id.reset);
         resetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 textResult.setText("");
-
-
             }
         });
 
@@ -195,14 +220,14 @@ public class ScanBarcodeActivity extends Activity {
                             textResult.setMovementMethod(new ScrollingMovementMethod());
 
                             //nacitanie dat z Qr codu do stringu
-                            String inputFromCode = barcodes.valueAt(0).rawValue.toString();
+                            inputFromCode = barcodes.valueAt(0).rawValue.toString();
 
 
                             System.out.print("test");
                             try {
                                 Data data = fillData(barcodes);
                                 Map<String, Object>  get_header = (Map<String, Object>) data.getResponse().get("header");
-                                   Map<String, Object>  get_content = (Map<String, Object>) data.getResponse().get("content");
+                                    get_content = (Map<String, Object>) data.getResponse().get("content");
                                    String url = (String) get_content.get("url");
 
                                 int is_url_set = (int) get_header.get("url");
@@ -219,7 +244,7 @@ public class ScanBarcodeActivity extends Activity {
 
 
                             textResult.setText(inputFromCode);
-                            //cameraSource.release();
+                          //  cameraSource.release();
 
 
                             // Toast.makeText(getApplicationContext(), inputFromCode , Toast.LENGTH_LONG).show();
@@ -261,7 +286,7 @@ public class ScanBarcodeActivity extends Activity {
 
         } catch (IOException e) {
             e.printStackTrace();
-           // Toast.makeText(getApplicationContext(), e.getMessage().toString(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), e.getMessage().toString(), Toast.LENGTH_SHORT).show();
         }
 
         Point[] points = new Point[4];
@@ -370,6 +395,45 @@ public class ScanBarcodeActivity extends Activity {
         }
     }
 
+
+
+
+
+    public void  getJsonResponsePost(View v) throws JSONException {
+
+      //  JSONObject main = new JSONObject();
+
+       /* main.put("Command", "CreateNewUser");
+        JSONObject user = new JSONObject();
+        user.put("FirstName", "John");
+        user.put("LastName", "Reese");
+        main.put("User", user);*/
+
+        JSONObject main = new JSONObject(get_content);
+
+
+
+
+        String url = "https://147.175.98.137/bakal/uploadJsonObject.php";
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, main,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        textResult.setText("String Response : "+ response.toString());
+                        Log.d("fsdfs", "test OK ");
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+               // textResult.setText("Error getting response" + error.toString());
+                Log.e(String.valueOf(error), error.toString());
+                Log.e(String.valueOf(error), "test chyby");
+
+            }
+        });
+        jsonObjectRequest.setTag(REQ_TAG);
+        requestQueue.add(jsonObjectRequest);
+    }
 
 
 }
